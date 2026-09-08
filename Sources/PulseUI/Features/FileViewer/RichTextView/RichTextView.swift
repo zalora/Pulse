@@ -48,8 +48,15 @@ public struct RichTextView: View {
     @ViewBuilder
     private var contents: some View {
         ContentView(viewModel: viewModel)
-            .searchable(text: $viewModel.searchTerm)
+            // `.always`: the field stays on screen. The default collapses it
+            // until the content is scrolled back to the top, which for a body
+            // thousands of lines long means scrolling up through all of them
+            // before you can search.
+            .searchable(text: $viewModel.searchTerm, placement: .navigationBarDrawer(displayMode: .always))
             .disableAutocorrection(true)
+            // Bodies and headers are identifiers, not prose: an auto-capitalised
+            // first letter is never what was meant.
+            .textInputAutocapitalization(.never)
     }
 
     private struct ContentView: View {

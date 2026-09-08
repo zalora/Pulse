@@ -53,6 +53,9 @@ package struct NetworkInspectorView: View {
         Section {
             NetworkRequestStatusSectionView(viewModel: .init(task: task, store: store))
         }
+        if customSectionPlacement == .belowStatus {
+            customSection
+        }
         Section {
             NetworkInspectorView.makeRequestSection(task: task, isCurrentRequest: settings.isShowingCurrentRequest)
         } header: { requestTypePicker }
@@ -65,6 +68,17 @@ package struct NetworkInspectorView: View {
                 NetworkCURLCell(task: task)
             }
         }
+        if customSectionPlacement == .bottom {
+            customSection
+        }
+    }
+
+    private var customSectionPlacement: ConsoleInspectorSectionPlacement {
+        environment.delegate?.console(inspectorViewPlacementFor: task) ?? .bottom
+    }
+
+    @ViewBuilder
+    private var customSection: some View {
         if let custom = environment.delegate?.console(inspectorViewFor: task) {
             custom
         }

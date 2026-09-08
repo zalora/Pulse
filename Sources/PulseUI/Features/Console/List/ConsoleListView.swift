@@ -80,6 +80,8 @@ private struct _ConsoleListView: View {
         .animation(.default, value: editMode)
         .animation(.default, value: searchViewModel.isSearching)
         .searchable(text: $searchBarViewModel.text, isPresented: $searchViewModel.isSearching)
+        // Hosts, paths and header names are identifiers, not prose.
+        .textInputAutocapitalization(.never)
         .searchPresentationToolbarBehavior(.avoidHidingContent)
         .textInputAutocapitalization(.never)
         .onSubmit(of: .search, searchViewModel.onSubmitSearch)

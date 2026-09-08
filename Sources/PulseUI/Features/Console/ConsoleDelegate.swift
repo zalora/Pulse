@@ -97,6 +97,15 @@ public protocol ConsoleDelegate: AnyObject {
     /// ```
     func console(inspectorViewFor task: NetworkTaskEntity) -> AnyView?
 
+    /// Returns where ``console(inspectorViewFor:)``'s section belongs among
+    /// the inspector's built-in sections.
+    ///
+    /// The default is ``ConsoleInspectorSectionPlacement/bottom``. Return
+    /// ``ConsoleInspectorSectionPlacement/belowStatus`` when the injected
+    /// section explains the task itself — a decoded payload, say — and reading
+    /// it before the request and response sections is the point.
+    func console(inspectorViewPlacementFor task: NetworkTaskEntity) -> ConsoleInspectorSectionPlacement
+
     /// Returns a redacted version of `value` for safe display, for example
     /// to mask auth tokens or user identifiers before they are rendered in
     /// the console list or the inspector header.
@@ -130,6 +139,10 @@ extension ConsoleDelegate {
         nil
     }
 
+    public func console(inspectorViewPlacementFor task: NetworkTaskEntity) -> ConsoleInspectorSectionPlacement {
+        .bottom
+    }
+
     public func console(responseBodyViewFor task: NetworkTaskEntity) -> AnyView? {
         nil
     }
@@ -141,6 +154,14 @@ extension ConsoleDelegate {
     public func console(redact value: String, field: ConsoleRedactionField, for task: NetworkTaskEntity) -> String {
         value
     }
+}
+
+/// Where a ``ConsoleDelegate``-supplied section sits in the network inspector.
+public enum ConsoleInspectorSectionPlacement: Sendable, Hashable {
+    /// Directly after the request status section, before the request section.
+    case belowStatus
+    /// After every built-in section. The default.
+    case bottom
 }
 
 /// Identifies which string the console is about to render, passed to
