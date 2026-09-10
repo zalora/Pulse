@@ -17,6 +17,18 @@ struct ConsoleNavigationTitleView: View {
             modeButton(.all, title: "All")
             modeButton(.logs, title: "Logs")
             modeButton(.network, title: "Network")
+
+            // A section of their own: these narrow the network list rather
+            // than choosing what kind of list it is, and running them together
+            // with the built-in three would read as four alternatives when
+            // they are not.
+            if !environment.customModes.isEmpty {
+                Section {
+                    ForEach(environment.customModes) { customMode in
+                        customModeButton(customMode)
+                    }
+                }
+            }
         } label: {
             headerView
         }
@@ -43,9 +55,12 @@ struct ConsoleNavigationTitleView: View {
 
     private func modeButton(_ mode: ConsoleMode, title: String) -> some View {
         Button {
+            // Clears any custom mode: picking one of the three built-in views
+            // is how a reader gets back to the unnarrowed list.
+            environment.select(nil)
             environment.mode = mode
         } label: {
-            if environment.mode == mode {
+            if environment.customMode == nil, environment.mode == mode {
                 Label(title, systemImage: "checkmark")
             } else {
                 Text(title)
@@ -53,7 +68,22 @@ struct ConsoleNavigationTitleView: View {
         }
     }
 
+    private func customModeButton(_ customMode: ConsoleCustomMode) -> some View {
+        Button {
+            environment.select(customMode)
+        } label: {
+            if environment.customMode?.id == customMode.id {
+                Label(customMode.title, systemImage: "checkmark")
+            } else {
+                Text(customMode.title)
+            }
+        }
+    }
+
     private var modeTitle: String {
+        if let customMode = environment.customMode {
+            return customMode.title
+        }
         switch environment.mode {
         case .all: return "Console"
         case .logs: return "Logs"

@@ -124,6 +124,27 @@ public protocol ConsoleDelegate: AnyObject {
     /// }
     /// ```
     func console(redact value: String, field: ConsoleRedactionField, for task: NetworkTaskEntity) -> String
+
+    /// Returns extra entries to add to the console's mode menu, below the
+    /// built-in All / Logs / Network ones.
+    ///
+    /// Each is a named view of the network list — an app that talks to more
+    /// than one backend can offer one per backend, so switching between them
+    /// is a single tap rather than a trip through the filters screen.
+    ///
+    /// ```swift
+    /// func consoleCustomModes() -> [ConsoleCustomMode] {
+    ///     [ConsoleCustomMode(
+    ///         id: "cms",
+    ///         title: "CMS",
+    ///         predicate: NSPredicate(format: "host == %@", "cdn.contentful.com")
+    ///     )]
+    /// }
+    /// ```
+    ///
+    /// The default implementation returns none, and the menu keeps its three
+    /// built-in entries.
+    func consoleCustomModes() -> [ConsoleCustomMode]
 }
 
 extension ConsoleDelegate {
@@ -153,6 +174,36 @@ extension ConsoleDelegate {
 
     public func console(redact value: String, field: ConsoleRedactionField, for task: NetworkTaskEntity) -> String {
         value
+    }
+
+    public func consoleCustomModes() -> [ConsoleCustomMode] {
+        []
+    }
+}
+
+/// A named view of the network list, contributed by the embedding app through
+/// ``ConsoleDelegate/consoleCustomModes()`` and shown in the console's mode
+/// menu alongside All, Logs and Network.
+///
+/// Selecting one switches the console to ``ConsoleMode/network`` and narrows
+/// the list with ``predicate``. The console's own filters and search still
+/// apply on top, so a custom mode narrows the list without taking anything
+/// away.
+public struct ConsoleCustomMode: Identifiable, @unchecked Sendable {
+    /// Distinguishes this mode from the others in the menu. Not shown.
+    public let id: String
+
+    /// The menu entry, and the console's title while it is selected.
+    public let title: String
+
+    /// Narrows the network list. Evaluated against `NetworkTaskEntity`, and
+    /// combined with the console's other predicates by `AND`.
+    public let predicate: NSPredicate
+
+    public init(id: String, title: String, predicate: NSPredicate) {
+        self.id = id
+        self.title = title
+        self.predicate = predicate
     }
 }
 

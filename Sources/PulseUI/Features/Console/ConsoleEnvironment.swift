@@ -30,6 +30,15 @@ package final class ConsoleEnvironment: ObservableObject {
     package var delegate: (any ConsoleDelegate)?
 
     @Published package var mode: ConsoleMode
+
+    /// The delegate-supplied mode in effect, if the reader picked one.
+    ///
+    /// Kept beside ``mode`` rather than folded into it: a custom mode is a
+    /// narrowed view of ``ConsoleMode/network``, not a fourth kind of list, so
+    /// everything downstream — the entity fetched, the sort keys, the counter
+    /// in the subtitle — goes on reading `mode` and needs no knowledge of it.
+    @Published package var customMode: ConsoleCustomMode?
+
     @Published package var listOptions: ConsoleListOptions = .init()
 
     package var bindingForNetworkMode: Binding<Bool> {
@@ -88,6 +97,31 @@ package final class ConsoleEnvironment: ObservableObject {
         )
 
         bind()
+    }
+
+    /// The extra modes the embedding app offers, if any.
+    @MainActor
+    package var customModes: [ConsoleCustomMode] {
+        delegate?.consoleCustomModes() ?? []
+    }
+
+    /// Switches the list to `customMode`, or back to the plain network list
+    /// when it is `nil`.
+    ///
+    /// Applied through `options.focus`, the slot the console keeps for a
+    /// predicate that narrows the list without touching the reader's own
+    /// filters — so leaving a custom mode restores exactly what was showing
+    /// before, and neither can silently undo the other.
+    package func select(_ customMode: ConsoleCustomMode?) {
+        self.customMode = customMode
+        filters.options.focus = customMode?.predicate
+
+        // Only on the way in. Clearing runs as part of picking one of the
+        // built-in modes, and forcing `.network` here would make the list flip
+        // to network and back on its way to Logs.
+        if customMode != nil {
+            mode = .network
+        }
     }
 
     private func bind() {
