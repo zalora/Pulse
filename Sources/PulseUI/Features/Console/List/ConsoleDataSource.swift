@@ -168,7 +168,16 @@ package final class ConsoleDataSource: NSObject, NSFetchedResultsControllerDeleg
         let predicates = [
             _makePredicate(mode, options),
             options.predicate,
-            options.focus,
+            // Network mode only. `focus` comes from a `ConsoleCustomMode`, whose
+            // predicate is written against `NetworkTaskEntity` — running it in
+            // `.all` or `.logs` fetches `LoggerMessageEntity`, where a keypath
+            // like `host` does not exist and Core Data aborts the process with
+            // "unimplemented SQL generation for predicate". That is not
+            // hypothetical: `refreshCountObservers` hands every options change
+            // to the `.logs` count observer as well as the `.network` one, so
+            // an ungated `focus` crashes the moment a custom mode is picked,
+            // whatever mode the reader was in.
+            mode == .network ? options.focus : nil,
             filter
         ].compactMap { $0 }
         switch predicates.count {
